@@ -29,7 +29,7 @@ Asciidrom bridges the gap between visual timing diagrams and text-based document
 ### Example
 
 **WaveDrom JSON Input:**
-```json
+```js
 {
   signal: [
     { name: "clk", wave: "p..P..p..P..p" },
