@@ -201,41 +201,69 @@ config: { hscale: 1 }
                 let ascii = '';
                 let lastState = 'x';
                 let dataIdx = 0;
+                let clockMode = false;
                 const wave = signal.wave.padEnd(maxWaveLength, '.');
                 for (let i = 0; i < wave.length; i++) {
                     let char = wave[i];
                     let currentWave = '';
                     if (char === '.') {
-                        switch (lastState) {
-                            case '0': currentWave = '___'; break;
-                            case '1': currentWave = '¯¯¯'; break;
-                            case 'x': currentWave = 'xxx'; break;
-                            case 'z': currentWave = 'zzz'; break;
-                            case 'd': currentWave = '==='; break;
-                            default:  currentWave = '...'; break;
+                        if (clockMode) {
+                            // Continue clock pattern - simple alternation
+                            if (lastState === '1') {
+                                currentWave = '¯\\_'; lastState = '0';
+                            } else if (lastState === '0') {
+                                currentWave = '_/¯'; lastState = '1';
+                            } else {
+                                // Fallback to normal dot behavior
+                                switch (lastState) {
+                                    case 'x': currentWave = 'xxx'; break;
+                                    case 'z': currentWave = 'zzz'; break;
+                                    case 'd': currentWave = '==='; break;
+                                    default:  currentWave = '...'; break;
+                                }
+                            }
+                        } else {
+                            // Normal dot behavior
+                            switch (lastState) {
+                                case '0': currentWave = '___'; break;
+                                case '1': currentWave = '¯¯¯'; break;
+                                case 'x': currentWave = 'xxx'; break;
+                                case 'z': currentWave = 'zzz'; break;
+                                case 'd': currentWave = '==='; break;
+                                default:  currentWave = '...'; break;
+                            }
                         }
                     } else if (char === '0') {
                         currentWave = (lastState === '1') ? '¯\\_' : '___';
                         lastState = '0';
+                        clockMode = false;
                     } else if (char === '1') {
                         currentWave = (lastState === '0') ? '_/¯' : '¯¯¯';
                         lastState = '1';
+                        clockMode = false;
                     } else if (['p', 'P', 'h', 'H'].includes(char)) {
                         currentWave = '_/¯'; lastState = '1';
+                        clockMode = true;
                     } else if (['n', 'N', 'l', 'L'].includes(char)) {
                         currentWave = '¯\\_'; lastState = '0';
+                        clockMode = true;
                     } else if (char === 'x') {
                         currentWave = 'xxx'; lastState = 'x';
+                        clockMode = false;
                     } else if (char === 'z') {
                         currentWave = 'zzz'; lastState = 'z';
+                        clockMode = false;
                     } else if (char >= '2' && char <= '9') {
                         const dataVal = (signal.data && signal.data[dataIdx]) ? signal.data[dataIdx++] : '';
                         currentWave = `=${dataVal.toString().substring(0, 1)}=`;
                         lastState = 'd';
+                        clockMode = false;
                     } else if (char === '|') {
                          currentWave = ' . ';
+                         clockMode = false;
                     } else {
                         currentWave = '???';
+                        clockMode = false;
                     }
                     ascii += currentWave;
                 }
